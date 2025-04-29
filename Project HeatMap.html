@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <title>California Expenditure Heatmap</title>
+    <style>
+      .tooltip {
+        position: absolute;
+        background: white;
+        border: 1px solid #ccc;
+        padding: 8px;
+        border-radius: 4px;
+        pointer-events: none;
+        font-family: sans-serif;
+        font-size: 12px;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="heatmap"></div>
+    <script>
+      const margin = {
+          top: 80,
+          right: 180,
+          bottom: 120,
+          left: 120,
+        },
+        width = 1200 - margin.left - margin.right,
+        height = 800 - margin.top - margin.bottom;
+
+      const svg = d3
+        .select('#heatmap')
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr(
+          'transform',
+          `translate(${margin.left},${margin.top})`,
+        );
+
+      Promise.all([
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv',
+        ),
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv',
+        ),
+      ]).then(([expData, regionData]) => {
+        const regionMap = {};
+        regionData.forEach(
+          (d) => (regionMap[d['Entity Name']] = d.Region),
+        );
+
+        const filteredData = expData
+          .filter(
+            (d) =>
+              +d['Fiscal Year'] >= 2013 &&
+              +d['Fiscal Year'] <= 2023,
+          )
+          .map((d) => ({
+            entity: d['Entity Name'],
+            year: +d['Fiscal Year'],
+            perCapita: +d['Expenditures Per Capita'],
+            totalExpenditure: +d['Total Expenditures'],
+            population: +d['Estimated Population'],
+            region:
+              regionMap[d['Entity Name']] || 'Unknown',
+          }))
+          .filter((d) => d.region !== 'Unknown');
+
+        const regionYearGroups = d3.rollup(
+          filteredData,
+          (v) => ({
+            avgPerCapita: d3.mean(v, (d) => d.perCapita),
+            totalPopulation: d3.sum(v, (d) => d.population),
+            totalExpenditure: d3.sum(
+              v,
+              (d) => d.totalExpenditure,
+            ),
+          }),
+          (d) => d.region,
+          (d) => d.year,
+        );
+
+        const heatmapData = [];
+        const regions = Array.from(
+          regionYearGroups.keys(),
+        ).sort();
+        const years = Array.from(
+          new Set(filteredData.map((d) => d.year)),
+        ).sort((a, b) => a - b);
+
+        regions.forEach((region) => {
+          years.forEach((year) => {
+            const data = regionYearGroups
+              .get(region)
+              ?.get(year);
+            heatmapData.push({
+              region,
+              year,
+              value: data?.avgPerCapita || 0,
+              population: data?.totalPopulation || 0,
+              totalExpenditure: data?.totalExpenditure || 0,
+            });
+          });
+        });
+
+        const x = d3
+          .scaleBand()
+          .domain(years.map(String))
+          .range([0, width])
+          .padding(0.05);
+
+        const y = d3
+          .scaleBand()
+          .domain(regions)
+          .range([0, height])
+          .padding(0.05);
+
+        const colorThresholds = [
+          0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000,
+        ];
+        const colorScale = d3
+          .scaleThreshold()
+          .domain(colorThresholds)
+          .range([
+            '#f7fcf0',
+            '#e0f3db',
+            '#ccebc5',
+            '#a8ddb5',
+            '#7bccc4',
+            '#4eb3d3',
+            '#2b8cbe',
+            '#0868ac',
+            '#084081',
+          ]);
+
+        svg
+          .selectAll()
+          .data(heatmapData)
+          .enter()
+          .append('rect')
+          .attr('x', (d) => x(String(d.year)))
+          .attr('y', (d) => y(d.region))
+          .attr('width', x.bandwidth())
+          .attr('height', y.bandwidth())
+          .style('fill', (d) => colorScale(d.value));
+
+        svg
+          .append('g')
+          .attr('transform', `translate(0,${height})`)
+          .call(d3.axisBottom(x))
+          .selectAll('text')
+          .attr('transform', 'rotate(-45)')
+          .style('text-anchor', 'end');
+
+        svg.append('g').call(d3.axisLeft(y));
+
+        const legendWidth = 25,
+          legendHeight = 250;
+        const legend = svg
+          .append('g')
+          .attr(
+            'transform',
+            `translate(${width + 60}, 50)`,
+          );
+
+        const legendScale = d3
+          .scaleLinear()
+          .domain([0, 4000])
+          .range([legendHeight, 0]);
+
+        const defs = svg.append('defs');
+        const gradient = defs
+          .append('linearGradient')
+          .attr('id', 'legend-gradient')
+          .attr('x1', '0%')
+          .attr('y1', '100%')
+          .attr('x2', '0%')
+          .attr('y2', '0%');
+
+        colorThresholds.forEach((t, i) => {
+          gradient
+            .append('stop')
+            .attr('offset', `${(t / 4000) * 100}%`)
+            .attr('stop-color', colorScale.range()[i]);
+        });
+
+        legend
+          .append('rect')
+          .attr('width', legendWidth)
+          .attr('height', legendHeight)
+          .style('fill', 'url(#legend-gradient)');
+
+        legend
+          .append('g')
+          .attr('transform', `translate(${legendWidth}, 0)`)
+          .call(
+            d3
+              .axisRight(legendScale)
+              .tickValues(colorThresholds)
+              .tickFormat(d3.format('$,.0f')),
+          );
+
+        legend
+          .append('text')
+          .attr('x', legendWidth / 2)
+          .attr('y', -15)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '14px')
+          .text('Per Capita ($)');
+
+        const tooltip = d3
+          .select('body')
+          .append('div')
+          .attr('class', 'tooltip');
+
+        svg
+          .selectAll('rect')
+          .on('mouseover', (event, d) => {
+            tooltip
+              .style('opacity', 1)
+              .html(
+                `
+                <strong>${d.region} (${d.year})</strong><br>
+                Per Capita: $${d.value.toFixed(0)}<br>
+                Total Population: ${d3.format(',')(d.population)}<br>
+                Total Expenditure: $${d3.format(',')(d.totalExpenditure)}
+              `,
+              )
+              .style('left', event.pageX + 10 + 'px')
+              .style('top', event.pageY - 28 + 'px');
+          })
+          .on('mouseout', () =>
+            tooltip.style('opacity', 0),
+          );
+
+        svg
+          .append('text')
+          .attr('x', width / 2)
+          .attr('y', -40)
+          .attr('text-anchor', 'middle')
+          .style('font-size', '20px')
+          .style('font-weight', 'bold')
+          .text(
+            'California Per Capita Expenditures by Region and Year (2013-2023)',
+          );
+      });
+    </script>
+  </body>
+</html>
