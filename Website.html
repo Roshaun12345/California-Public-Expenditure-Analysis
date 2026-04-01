@@ -3,9 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>California Public Expenditure Analysis</title>
+    <title>California Public Expenditure Analysis | Roshaun Gregory</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            color: #212529;
+            line-height: 1.6;
+        }
+
+        /* Nav */
+        nav {
+            background: #1a1a2e;
+            color: #fff;
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        nav .nav-title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        nav a {
+            color: #a8c7fa;
+            text-decoration: none;
+            font-size: 14px;
+            border: 1px solid #a8c7fa;
+            padding: 6px 14px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+        nav a:hover { background: rgba(168,199,250,0.15); }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+            color: #fff;
+            padding: 80px 40px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+        .hero .subtitle {
+            font-size: 18px;
+            color: #a8c7fa;
+            max-width: 700px;
+            margin: 0 auto 32px;
+        }
+        .hero .tags {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .hero .tag {
+            background: rgba(168,199,250,0.15);
+            border: 1px solid rgba(168,199,250,0.3);
+            color: #a8c7fa;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        /* Section layout */
+        .section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+        .section-header {
+            margin-bottom: 28px;
+        }
+        .section-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 8px;
+        }
+        .section-header p {
+            color: #555;
+            font-size: 15px;
+            max-width: 800px;
+        }
+
+        /* Insight box */
+        .insight {
+            background: #fff;
+            border-left: 4px solid #0f3460;
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            margin-top: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .insight .insight-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #0f3460;
+            margin-bottom: 8px;
+        }
+        .insight p {
+            color: #333;
+            font-size: 15px;
+        }
+
+        /* Chart containers */
+        .chart-container {
+            background: #fff;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            overflow-x: auto;
+        }
+
+        /* Divider between sections */
+        .section + .section {
+            border-top: 1px solid #e9ecef;
+        }
+
+        /* Controls */
+        #controls {
+            text-align: center;
+            margin-bottom: 16px;
+        }
+        #controls label { font-size: 15px; color: #333; }
+
+        /* Charts */
+        #scatter-plot { width: 100%; height: 800px; }
+        .dot { stroke: #fff; stroke-width: 1px; opacity: 0.8; }
+        .axis text { font-size: 12px; }
+
+        select {
+            padding: 8px 12px;
+            font-size: 15px;
+            margin-left: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .extremes-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 100%;
+        }
+        .region-chart { padding: 10px; width: 100%; }
+
+        .bar { fill: #4e79a7; transition: fill 0.2s; }
+        .bar.high { fill: #e15759; }
+        .bar.low { fill: #76b7b2; }
+
+        .line { fill: none; stroke-width: 2.5px; }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .legend-item { display: flex; align-items: center; margin: 0 10px; }
+        .legend-color { width: 20px; height: 20px; margin-right: 5px; }
+
         .tooltip {
             position: absolute;
             padding: 8px;
@@ -15,121 +186,145 @@
             pointer-events: none;
             font-size: 14px;
         }
-        .line {
-            fill: none;
-            stroke-width: 2.5px;
-        }
-        .legend {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin: 0 10px;
-        }
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            margin-right: 5px;
-        }
-        h1, h2 {
+
+        /* Footer */
+        footer {
+            background: #1a1a2e;
+            color: #a8c7fa;
             text-align: center;
+            padding: 40px;
+            margin-top: 60px;
+            font-size: 14px;
         }
-        .chart-container {
-            margin: 30px auto;
-        }
-        #controls {
-            margin: 20px auto;
-            width: 1200px;
-            text-align: center;
-        }
-        #scatter-plot {
-            margin: 20px auto;
-            width: 1200px;
-            height: 800px;
-        }
-        .dot {
-            stroke: #fff;
-            stroke-width: 1px;
-            opacity: 0.8;
-        }
-        .axis text {
-            font-size: 12px;
-        }
-        select {
-            padding: 8px;
-            font-size: 16px;
-            margin-left: 10px;
-        }
-        /* Small multiples chart styles */
-        .extremes-container {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 20px;
-            width: 100%;
-        }
-        .region-chart {
-            padding: 10px;
-            margin: 0;
-            width: 100%;
-        }
-        .bar {
-            fill: #4e79a7;
-            transition: fill 0.2s;
-        }
-        .bar.high {
-            fill: #e15759;
-        }
-        .bar.low {
-            fill: #76b7b2;
-        }
+        footer a { color: #a8c7fa; }
     </style>
 </head>
 <body>
-    <div class="intro">
+
+    <nav>
+        <span class="nav-title">California Public Expenditure Analysis</span>
+        <a href="https://github.com/Roshaun12345/California-Public-Expenditure-Analysis" target="_blank">View on GitHub</a>
+    </nav>
+
+    <div class="hero">
         <h1>California Public Expenditure Analysis</h1>
-        <p style="text-align: center;"><strong>Name:</strong> Roshaun Gregory</p>
-        <p style="text-align: center;">The goal is to provide insights into the differences in public expenditure 
-            patterns across the regions of Northern California, Southern California, 
-            Central California, and the Sierra Nevada area. By tracking these patterns 
-            over the last ten years, we aim to uncover trends in spending and population 
-            dynamics.</p>
-    </div>
-
-    <div class="chart-container">
-        <h2>California Regional Population Trends (2013-2023)</h2>
-        <div id="chart"></div>
-    </div>
-
-    <div class="chart-container">
-        <h2>Total Expenditure Distribution by Region (2013-2023)</h2>
-        <div id="pie-chart"></div>
-        <div class="legend" id="legend"></div>
-    </div>
-
-    <div class="chart-container">
-        <h2>California Per Capita Expenditures by Region and Year (2013-2023)</h2>
-        <div id="heatmap"></div>
-    </div>
-
-    <div class="chart-container">
-        <h2>Top 5 & Bottom 5 Cities by Average Per Capita Spending (2013-2023)</h2>
-        <div id="extremes-charts" class="extremes-container"></div>
-    </div>
-
-    <div class="chart-container">
-        <h2>California Cities: Avg Spending vs Population (2013-2023)</h2>
-        <div id="controls">
-            <label for="region-filter">Filter by Region:</label>
-            <select id="region-filter">
-                <option value="all">All Regions</option>
-            </select>
+        <p class="subtitle">
+            A decade of public spending data across California's regions — exploring how cities allocate resources,
+            where per-capita spending is highest, and what population trends reveal about fiscal priorities.
+        </p>
+        <div class="tags">
+            <span class="tag">D3.js</span>
+            <span class="tag">Data Visualization</span>
+            <span class="tag">California Open Data</span>
+            <span class="tag">2013 – 2023</span>
+            <span class="tag">4 Regions · 400+ Cities</span>
         </div>
-        <div id="scatter-plot"></div>
     </div>
+
+    <!-- Population Trends -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Regional Population Trends (2013–2023)</h2>
+            <p>How has each region grown over the decade? Population shifts directly affect how much cities spend per resident.</p>
+        </div>
+        <div class="chart-container">
+            <div id="chart"></div>
+        </div>
+        <div class="insight">
+            <div class="insight-label">Key Finding</div>
+            <p>Southern California consistently holds the largest share of the state's population, growing steadily throughout the decade.
+               Northern California (including the Bay Area) shows slower but sustained growth, while Central California and the Sierra Nevada
+               remain comparatively sparse — a gap that drives significant differences in per-capita spending patterns.</p>
+        </div>
+    </div>
+
+    <!-- Pie Chart -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Total Expenditure Share by Region (2013–2023)</h2>
+            <p>Where does California's total public spending actually go? This breakdown shows each region's share of cumulative expenditure over the full decade.</p>
+        </div>
+        <div class="chart-container">
+            <div id="pie-chart"></div>
+            <div class="legend" id="legend"></div>
+        </div>
+        <div class="insight">
+            <div class="insight-label">Key Finding</div>
+            <p>Despite its smaller population, the Sierra Nevada region punches above its weight in per-capita terms —
+               smaller cities often carry higher fixed infrastructure and service costs regardless of population size.
+               Southern California dominates total expenditure by volume, but that raw number masks wide variation in
+               how efficiently individual cities allocate their budgets.</p>
+        </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Per Capita Expenditure by Region and Year</h2>
+            <p>The heatmap reveals year-over-year spending intensity across all four regions. Darker cells indicate higher average per-capita expenditure.</p>
+        </div>
+        <div class="chart-container">
+            <div id="heatmap"></div>
+        </div>
+        <div class="insight">
+            <div class="insight-label">Key Finding</div>
+            <p>Per-capita spending shows a notable uptick across most regions around 2020–2021, likely reflecting
+               pandemic-era emergency expenditures and federal relief distribution at the local level. The Sierra Nevada
+               region displays the most volatility year-over-year, consistent with the fiscal sensitivity of smaller municipalities
+               to one-time capital projects or emergency costs.</p>
+        </div>
+    </div>
+
+    <!-- Small Multiples -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Top 5 & Bottom 5 Cities by Average Per Capita Spending</h2>
+            <p>Within each region, which cities are the highest and lowest spenders? This comparison surfaces the outliers driving regional averages.</p>
+        </div>
+        <div class="chart-container">
+            <div id="extremes-charts" class="extremes-container"></div>
+        </div>
+        <div class="insight">
+            <div class="insight-label">Key Finding</div>
+            <p>The spread between top and bottom spenders within each region is striking. High-spending cities tend to be
+               small in population but carry significant infrastructure obligations — utility districts, public safety, or
+               geographic isolation. Low spenders are often larger cities benefiting from economies of scale. This pattern
+               holds consistently across all four regions, suggesting city size is a stronger predictor of per-capita spending
+               than regional location alone.</p>
+        </div>
+    </div>
+
+    <!-- Scatter Plot -->
+    <div class="section">
+        <div class="section-header">
+            <h2>Spending vs. Population: City-Level View</h2>
+            <p>Does population size predict how much a city spends per resident? Use the filter to explore patterns within each region.</p>
+        </div>
+        <div class="chart-container">
+            <div id="controls">
+                <label for="region-filter">Filter by Region:</label>
+                <select id="region-filter">
+                    <option value="all">All Regions</option>
+                </select>
+            </div>
+            <div id="scatter-plot"></div>
+        </div>
+        <div class="insight">
+            <div class="insight-label">Key Finding</div>
+            <p>There is a clear inverse relationship between city population and per-capita expenditure — smaller cities
+               spend disproportionately more per resident. The relationship is most pronounced in the Sierra Nevada and
+               Central California regions, where small municipalities face high fixed costs. Large cities like Los Angeles
+               and San Diego cluster toward the lower-right: high population, moderate per-capita spend. Use the region
+               filter to isolate these patterns.</p>
+        </div>
+    </div>
+
+    <footer>
+        <p>Built with D3.js · Data from California State Controller's Office ·
+           <a href="https://github.com/Roshaun12345/California-Public-Expenditure-Analysis" target="_blank">GitHub</a>
+        </p>
+        <p style="margin-top: 8px; color: #6c8ebf;">Roshaun Gregory</p>
+    </footer>
 
     <script>
         // Population Trends Chart
