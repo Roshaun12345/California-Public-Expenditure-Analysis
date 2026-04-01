@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>California Regional Population Trends</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .line {
+        fill: none;
+        stroke-width: 2.5px;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 4px;
+        pointer-events: none;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>
+      California Regional Population Trends (2013-2023)
+    </h2>
+    <div id="chart"></div>
+
+    <script>
+      const margin = {
+        top: 50,
+        right: 150,
+        bottom: 50,
+        left: 60,
+      };
+      const width = 800 - margin.left - margin.right;
+      const height = 500 - margin.top - margin.bottom;
+
+      const svg = d3
+        .select('#chart')
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr(
+          'transform',
+          `translate(${margin.left},${margin.top})`,
+        );
+
+      Promise.all([
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/refs/heads/main/City_Expenditures_Per_Capita.csv',
+        ),
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/refs/heads/main/city_to_region.csv',
+        ),
+      ]).then(function ([expenditureData, regionData]) {
+        const regionMap = {};
+        regionData.forEach((d) => {
+          regionMap[d['Entity Name']] = d.Region;
+        });
+
+        const filteredData = expenditureData
+          .filter((d) => {
+            const year = +d['Fiscal Year'];
+            return year >= 2013 && year <= 2023;
+          })
+          .map((d) => {
+            return {
+              entity: d['Entity Name'],
+              year: +d['Fiscal Year'],
+              population: +d['Estimated Population'],
+              region:
+                regionMap[d['Entity Name']] || 'Unknown',
+            };
+          })
+          .filter((d) => d.region !== 'Unknown');
+
+        const regionYearPop = d3.rollup(
+          filteredData,
+          (v) => d3.sum(v, (d) => d.population),
+          (d) => d.region,
+          (d) => d.year,
+        );
+
+        const lineData = [];
+        const regions = Array.from(regionYearPop.keys());
+        const years = Array.from(
+          new Set(filteredData.map((d) => d.year)),
+        ).sort((a, b) => a - b);
+
+        regions.forEach((region) => {
+          const regionValues = years.map((year) => ({
+            year: year,
+            population:
+              regionYearPop.get(region).get(year) || 0,
+          }));
+          lineData.push({
+            region: region,
+            values: regionValues,
+          });
+        });
+
+
+        const x = d3
+          .scaleLinear()
+          .domain(d3.extent(years))
+          .range([0, width]);
+
+        const maxPopulation = d3.max(lineData, (d) =>
+          d3.max(d.values, (v) => v.population),
+        );
+        const y = d3
+          .scaleLinear()
+          .domain([0, maxPopulation * 1.05])
+          .range([height, 0]);
+
+        svg
+          .append('g')
+          .attr('transform', `translate(0,${height})`)
+          .call(d3.axisBottom(x).tickFormat(d3.format('d')))
+          .append('text')
+          .attr('x', width / 2)
+          .attr('y', 35)
+          .attr('fill', '#000')
+          .style('text-anchor', 'middle')
+          .text('Year');
+
+        svg
+          .append('g')
+          .call(
+            d3
+              .axisLeft(y)
+              .ticks(6)
+              .tickFormat(
+                (d) => `${(d / 1000000).toFixed(1)}M`,
+              ),
+          )
+          .append('text')
+          .attr('transform', 'rotate(-90)')
+          .attr('y', -40)
+          .attr('x', -height / 2)
+          .attr('fill', '#000')
+          .style('text-anchor', 'middle')
+          .text('Population');
+
+        const color = d3
+          .scaleOrdinal()
+          .domain(regions)
+          .range([
+            '#1f77b4',
+            '#ff7f0e',
+            '#2ca02c',
+            '#d62728',
+          ]);
+
+        const line = d3
+          .line()
+          .x((d) => x(d.year))
+          .y((d) => y(d.population));
+
+        svg
+          .selectAll('.line')
+          .data(lineData)
+          .enter()
+          .append('path')
+          .attr('class', 'line')
+          .attr('d', (d) => line(d.values))
+          .attr('stroke', (d) => color(d.region))
+          .attr('stroke-width', 2.5)
+          .attr('fill', 'none');
+
+        // Add tooltip
+        const tooltip = d3
+          .select('body')
+          .append('div')
+          .attr('class', 'tooltip')
+          .style('opacity', 0);
+
+        // Add dots for interaction
+        svg
+          .selectAll('.dot-group')
+          .data(lineData)
+          .enter()
+          .append('g')
+          .attr('class', 'dot-group')
+          .selectAll('.dot')
+          .data((d) =>
+            d.values.map((v) => ({
+              ...v,
+              region: d.region,
+            })),
+          )
+          .enter()
+          .append('circle')
+          .attr('class', 'dot')
+          .attr('cx', (d) => x(d.year))
+          .attr('cy', (d) => y(d.population))
+          .attr('r', 4)
+          .attr('fill', (d) => color(d.region))
+          .on('mouseover', function (event, d) {
+            d3.select(this).attr('r', 6);
+            tooltip
+              .transition()
+              .duration(200)
+              .style('opacity', 0.9);
+            tooltip
+              .html(
+                `
+            <strong>${d.region}</strong><br>
+            Year: ${d.year}<br>
+            Population: ${d3.format(',')(d.population)}
+          `,
+              )
+              .style('left', event.pageX + 10 + 'px')
+              .style('top', event.pageY - 28 + 'px');
+          })
+          .on('mouseout', function () {
+            d3.select(this).attr('r', 4);
+            tooltip
+              .transition()
+              .duration(500)
+              .style('opacity', 0);
+          });
+
+        const legend = svg
+          .append('g')
+          .attr(
+            'transform',
+            `translate(${width + 10}, 20)`,
+          );
+
+        regions.forEach((region, i) => {
+          legend
+            .append('rect')
+            .attr('x', 0)
+            .attr('y', i * 20)
+            .attr('width', 15)
+            .attr('height', 15)
+            .style('fill', color(region));
+
+          legend
+            .append('text')
+            .attr('x', 20)
+            .attr('y', i * 20 + 12)
+            .text(region)
+            .style('font-size', '12px');
+        });
+      });
+    </script>
+  </body>
+</html>

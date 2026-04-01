@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>California Public Expenditure Analysis</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .tooltip {
+            position: absolute;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            font-size: 16px;
+        }
+        h1 {
+            font-size: 32px;
+        }
+        h2 {
+            font-size: 28px;
+            text-align: center;
+        }
+        h3 {
+            font-size: 22px;
+        }
+        .chart-container {
+            margin: 30px auto;
+            padding: 20px 0;
+            width: 100%;
+        }
+        .chart-content {
+            width: 1300px;
+            margin: 0 auto;
+        }
+        #controls {
+            margin: 20px auto;
+            width: 1300px;
+            text-align: center;
+        }
+        #scatter-plot {
+            margin: 20px auto;
+            width: 1300px;
+            height: 800px;
+        }
+        .dot {
+            stroke: #fff;
+            stroke-width: 1px;
+            opacity: 0.8;
+        }
+        .axis text {
+            font-size: 16px;
+        }
+        select {
+            padding: 8px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        .extremes-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 30px;
+            width: 100%;
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .region-chart {
+            padding: 10px;
+            margin: 0 0 40px 0;
+            width: 100%;
+            height: 420px;
+        }
+        .bar {
+            fill: #4e79a7;
+            transition: fill 0.2s;
+        }
+        .bar.high {
+            fill: #e15759;
+        }
+        .bar.low {
+            fill: #76b7b2;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 16px;
+        }
+        .axis-line {
+            stroke: #000;
+            stroke-width: 1.5px;
+        }
+        .intro {
+            width: 1300px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .divider {
+            border-top: 1px solid #ccc;
+            margin: 40px auto;
+            width: 1300px;
+        }
+        .name-header {
+            border-bottom: 2px solid #4e79a7;
+            width: 200px;
+            margin: 10px auto 20px;
+        }
+        .heatmap-insight, .multiples-insight, .scatter-insight, .population-insight, .pie-insight {
+            background-color: #e6f2ff;
+            padding: 20px;
+            margin: 60px auto 30px;
+            width: 1300px;
+            border-radius: 5px;
+            line-height: 1.6;
+            text-align: center;
+            font-size: 16px;
+        }
+        .line {
+            fill: none;
+            stroke-width: 2.5px;
+        }
+        .line-chart-container {
+            margin: 30px auto;
+            width: 1300px;
+        }
+        .pie-legend {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pie-legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0 15px 10px 15px;
+            font-size: 16px;
+        }
+        .pie-legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+        }
+        #pie-chart {
+            width: 1300px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        .region-chart svg {
+            overflow: visible;
+            margin-left: 20px;
+            margin-right: 20px;
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="intro">
+        <h1>California Public Expenditure Analysis</h1>
+        <p><strong>Name:</strong> Roshaun Gregory</p>
+        <div class="name-header"></div>
+        <p>The goal is to provide insights into the differences in public expenditure 
+            patterns across the regions of Northern California, Southern California, 
+            Central California, and the Sierra Nevada area. By tracking these patterns 
+            over the last ten years, we aim to uncover trends in spending and population 
+            dynamics.</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="chart-container">
+        <div class="chart-content">
+            <h2>Total Expenditure Distribution by Region (2013-2023)</h2>
+            <div id="pie-chart"></div>
+            <div class="pie-insight">
+                More than half of California State expenditure went into Southern California, while the Sierra Nevada region received less than 1 percent of total spending.
+            </div>
+            <div class="divider"></div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-content">
+            <h2>California Regional Population Trends (2013-2023)</h2>
+            <div id="population-chart" class="line-chart-container"></div>
+            <div class="population-insight">
+                The population trends show relatively stable patterns over the decade with no major changes in any region. Southern California maintains the largest population, while the Sierra Nevada region has the smallest. All regions show gradual growth over the 10-year period.
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="chart-container">
+        <div class="chart-content">
+            <h2>California Per Capita Expenditures by Region and Year (2013-2023)</h2>
+            <div id="heatmap"></div>
+            <div class="heatmap-insight">
+                The heatmap reveals variations in per capita spending across regions and years, with some regions consistently showing higher expenditures per resident. A notable trend emerges post-2020, where values tend to be slightly higher across most regions, possibly reflecting increased public spending in response to the COVID-19 pandemic. The Central Valley region shows the most stable pattern over time, while Northern California exhibits greater year-to-year variability.
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="chart-container">
+        <div class="chart-content">
+            <h2>Top 5 & Bottom 5 Cities by Average Per Capita Spending (2013-2023)</h2>
+            <div id="loading" class="loading">Loading data...</div>
+            <div id="extremes-charts" class="extremes-container"></div>
+            <div class="multiples-insight">
+                The small multiples charts highlight the cities with the highest and lowest per capita spending in each region. All charts now use consistent log scales for better comparison across regions. Southern California shows the widest range of spending values, while Sierra Nevada cities cluster at the lower end.
+            </div>
+        </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="chart-container">
+        <div class="chart-content">
+            <h2>California Cities: Avg Spending vs Population (2013-2023)</h2>
+            <div id="controls">
+                <label for="region-filter">Filter by Region:</label>
+                <select id="region-filter">
+                    <option value="all">All Regions</option>
+                </select>
+            </div>
+            <div id="scatter-plot"></div>
+            <div class="scatter-insight">
+                While Southern California's per capita expenditure appears significantly higher than other regions, 
+                the overwhelming majority of this spending is concentrated in just two cities: Industry and Vernon. 
+                These cities have very low population estimates, which dramatically skews the per capita calculations. 
+                When excluding these outliers, Southern California's spending patterns align more closely with other regions.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const regionColors = {
+            'Northern California': '#1f77b4',
+            'Southern California': '#ff7f0e',
+            'Central California': '#2ca02c',
+            'Sierra Nevada': '#d62728'
+        };
+
+        const populationMargin = { top: 50, right: 150, bottom: 50, left: 60 };
+        const populationWidth = 1300 - populationMargin.left - populationMargin.right;
+        const populationHeight = 500 - populationMargin.top - populationMargin.bottom;
+
+        const populationSvg = d3.select('#population-chart')
+            .append('svg')
+            .attr('width', populationWidth + populationMargin.left + populationMargin.right)
+            .attr('height', populationHeight + populationMargin.top + populationMargin.bottom)
+            .append('g')
+            .attr('transform', `translate(${populationMargin.left},${populationMargin.top})`);
+
+        Promise.all([
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv'),
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv')
+        ]).then(function ([expenditureData, regionData]) {
+            const regionMap = {};
+            regionData.forEach((d) => {
+                regionMap[d['Entity Name']] = d.Region;
+            });
+
+            const filteredData = expenditureData
+                .filter((d) => {
+                    const year = +d['Fiscal Year'];
+                    return year >= 2013 && year <= 2023;
+                })
+                .map((d) => {
+                    return {
+                        entity: d['Entity Name'],
+                        year: +d['Fiscal Year'],
+                        population: +d['Estimated Population'],
+                        region: regionMap[d['Entity Name']] || 'Unknown',
+                    };
+                })
+                .filter((d) => d.region !== 'Unknown');
+
+            const regionYearPop = d3.rollup(
+                filteredData,
+                (v) => d3.sum(v, (d) => d.population),
+                (d) => d.region,
+                (d) => d.year
+            );
+
+            const lineData = [];
+            const regions = Array.from(regionYearPop.keys());
+            const years = Array.from(new Set(filteredData.map((d) => d.year))).sort((a, b) => a - b);
+
+            regions.forEach((region) => {
+                const regionValues = years.map((year) => ({
+                    year: year,
+                    population: regionYearPop.get(region).get(year) || 0,
+                }));
+                lineData.push({
+                    region: region,
+                    values: regionValues,
+                });
+            });
+
+            const x = d3.scaleLinear()
+                .domain(d3.extent(years))
+                .range([0, populationWidth]);
+
+            const maxPopulation = d3.max(lineData, (d) => d3.max(d.values, (v) => v.population));
+            const y = d3.scaleLinear()
+                .domain([0, maxPopulation * 1.05])
+                .range([populationHeight, 0]);
+
+            populationSvg.append('g')
+                .attr('transform', `translate(0,${populationHeight})`)
+                .call(d3.axisBottom(x).tickFormat(d3.format('d')))
+                .append('text')
+                .attr('x', populationWidth / 2)
+                .attr('y', 35)
+                .attr('fill', '#000')
+                .style('text-anchor', 'middle')
+                .text('Year');
+
+            populationSvg.append('g')
+                .call(
+                    d3.axisLeft(y)
+                        .ticks(6)
+                        .tickFormat((d) => `${Math.round(d / 1000000)}M`)
+                )
+                .append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', -40)
+                .attr('x', -populationHeight / 2)
+                .attr('fill', '#000')
+                .style('text-anchor', 'middle')
+                .text('Population');
+
+            const color = d3.scaleOrdinal()
+                .domain(regions)
+                .range(regions.map(r => regionColors[r]));
+
+            const line = d3.line()
+                .x((d) => x(d.year))
+                .y((d) => y(d.population));
+
+            populationSvg.selectAll('.line')
+                .data(lineData)
+                .enter()
+                .append('path')
+                .attr('class', 'line')
+                .attr('d', (d) => line(d.values))
+                .attr('stroke', (d) => color(d.region))
+                .attr('stroke-width', 2.5)
+                .attr('fill', 'none');
+
+            const tooltip = d3.select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('opacity', 0);
+
+            populationSvg.selectAll('.dot-group')
+                .data(lineData)
+                .enter()
+                .append('g')
+                .attr('class', 'dot-group')
+                .selectAll('.dot')
+                .data((d) => d.values.map((v) => ({
+                    ...v,
+                    region: d.region,
+                })))
+                .enter()
+                .append('circle')
+                .attr('class', 'dot')
+                .attr('cx', (d) => x(d.year))
+                .attr('cy', (d) => y(d.population))
+                .attr('r', 4)
+                .attr('fill', (d) => color(d.region))
+                .on('mouseover', function (event, d) {
+                    d3.select(this).attr('r', 6);
+                    tooltip.transition()
+                        .duration(200)
+                        .style('opacity', 0.9);
+                    tooltip.html(
+                        `<strong>${d.region}</strong><br>
+                        Year: ${d.year}<br>
+                        Population: ${d3.format(',')(d.population)}`
+                    )
+                        .style('left', event.pageX + 10 + 'px')
+                        .style('top', event.pageY - 28 + 'px');
+                })
+                .on('mouseout', function () {
+                    d3.select(this).attr('r', 4);
+                    tooltip.transition()
+                        .duration(500)
+                        .style('opacity', 0);
+                });
+
+            const legend = populationSvg.append('g')
+                .attr('transform', `translate(${populationWidth + 10}, 20)`);
+
+            regions.forEach((region, i) => {
+                legend.append('rect')
+                    .attr('x', 0)
+                    .attr('y', i * 20)
+                    .attr('width', 15)
+                    .attr('height', 15)
+                    .style('fill', color(region));
+
+                legend.append('text')
+                    .attr('x', 20)
+                    .attr('y', i * 20 + 12)
+                    .text(region)
+                    .style('font-size', '14px');
+            });
+        });
+
+        const pieMargin = { top: 40, right: 40, bottom: 40, left: 40 };
+        const pieWidth = 800 - pieMargin.left - pieMargin.right;
+        const pieHeight = 500 - pieMargin.top - pieMargin.bottom;
+        const pieRadius = Math.min(pieWidth, pieHeight) / 2 - 60;
+
+        const pieSvg = d3.select('#pie-chart')
+            .append('svg')
+            .attr('width', pieWidth + pieMargin.left + pieMargin.right)
+            .attr('height', pieHeight + pieMargin.top + pieMargin.bottom)
+            .append('g')
+            .attr('transform', `translate(${pieWidth / 2 + pieMargin.left}, ${pieHeight / 2 + pieMargin.top})`);
+
+        Promise.all([
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv'),
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv')
+        ]).then(function ([expenditureData, regionData]) {
+            const regionMap = {};
+            regionData.forEach((d) => {
+                regionMap[d['Entity Name']] = d.Region;
+            });
+
+            const filteredData = expenditureData
+                .filter((d) => {
+                    const year = +d['Fiscal Year'];
+                    return year >= 2013 && year <= 2023;
+                })
+                .map((d) => {
+                    return {
+                        entity: d['Entity Name'],
+                        totalExpenditure: +d['Total Expenditures'],
+                        region: regionMap[d['Entity Name']] || 'Unknown',
+                    };
+                })
+                .filter((d) => d.region !== 'Unknown');
+
+            const regionTotals = d3.rollup(
+                filteredData,
+                (v) => d3.sum(v, (d) => d.totalExpenditure),
+                (d) => d.region,
+            );
+
+            const pieData = Array.from(
+                regionTotals,
+                ([region, total]) => ({
+                    region,
+                    total,
+                }),
+            ).sort((a, b) => b.total - a.total);
+
+            const color = d3.scaleOrdinal()
+                .domain(pieData.map((d) => d.region))
+                .range(pieData.map(d => regionColors[d.region]));
+
+            const pie = d3.pie()
+                .value((d) => d.total)
+                .sort(null);
+
+            const arc = d3.arc()
+                .innerRadius(0)
+                .outerRadius(pieRadius);
+
+            const outerArc = d3.arc()
+                .innerRadius(pieRadius * 0.85)
+                .outerRadius(pieRadius * 1.4);
+
+            const tooltip = d3.select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('opacity', 0);
+
+            const arcs = pieSvg
+                .selectAll('.arc')
+                .data(pie(pieData))
+                .enter()
+                .append('g')
+                .attr('class', 'arc');
+
+            arcs.append('path')
+                .attr('d', arc)
+                .attr('fill', (d) => color(d.data.region))
+                .on('mouseover', function (event, d) {
+                    d3.select(this)
+                        .attr('stroke', 'white')
+                        .attr('stroke-width', 2);
+                    tooltip.transition()
+                        .duration(200)
+                        .style('opacity', 0.9);
+                    tooltip.html(
+                        `<strong>${d.data.region}</strong><br>
+                        Total: $${d3.format(',.0f')(d.data.total)}<br>
+                        Percentage: ${(((d.endAngle - d.startAngle) / (2 * Math.PI)) * 100).toFixed(1)}%`
+                    )
+                        .style('left', event.pageX + 15 + 'px')
+                        .style('top', event.pageY - 35 + 'px');
+                })
+                .on('mouseout', function () {
+                    d3.select(this).attr('stroke', null);
+                    tooltip.transition()
+                        .duration(500)
+                        .style('opacity', 0);
+                });
+
+            arcs.append('text')
+                .attr('transform', (d) => {
+                    const pos = outerArc.centroid(d);
+                    const angle = midAngle(d);
+                    pos[0] = pieRadius * 1.6 * (angle < Math.PI ? 1 : -1);
+                    if (d.data.region === 'Central California') {
+                        pos[1] -= 15;
+                    } else if (d.data.region === 'Sierra Nevada') {
+                        pos[1] += 15;
+                    }
+                    return `translate(${pos})`;
+                })
+                .attr('dy', '0.35em')
+                .style('text-anchor', (d) => midAngle(d) < Math.PI ? 'start' : 'end')
+                .text((d) => d.data.region)
+                .style('font-size', '16px')
+                .style('font-weight', '500')
+                .style('fill', '#333');
+
+            function midAngle(d) {
+                return d.startAngle + (d.endAngle - d.startAngle) / 2;
+            }
+
+            const legend = d3.select('#pie-chart')
+                .append('div')
+                .attr('class', 'pie-legend');
+
+            const legendItems = legend
+                .selectAll('.pie-legend-item')
+                .data(pieData)
+                .enter()
+                .append('div')
+                .attr('class', 'pie-legend-item');
+
+            legendItems.append('div')
+                .attr('class', 'pie-legend-color')
+                .style('background-color', (d) => color(d.region));
+
+            legendItems.append('div')
+                .text((d) => d.region)
+                .style('font-size', '16px')
+                .style('font-weight', '500');
+
+            const totalExpenditure = d3.sum(pieData, (d) => d.total);
+            d3.select('#pie-chart').insert('h3', ':first-child')
+                .text(`Total Expenditure: $${d3.format(',.0f')(totalExpenditure)}`);
+        });
+
+        const heatmapMargin = { top: 80, right: 180, bottom: 150, left: 150 };
+        const heatmapWidth = 1300 - heatmapMargin.left - heatmapMargin.right;
+        const heatmapHeight = 800 - heatmapMargin.top - heatmapMargin.bottom;
+
+        const heatmapSvg = d3.select('#heatmap')
+            .append('svg')
+            .attr('width', heatmapWidth + heatmapMargin.left + heatmapMargin.right)
+            .attr('height', heatmapHeight + heatmapMargin.top + heatmapMargin.bottom)
+            .append('g')
+            .attr('transform', `translate(${heatmapMargin.left},${heatmapMargin.top})`);
+
+        Promise.all([
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv'),
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv')
+        ]).then(([expData, regionData]) => {
+            const regionMap = {};
+            regionData.forEach((d) => (regionMap[d['Entity Name']] = d.Region));
+
+            const filteredData = expData
+                .filter((d) => +d['Fiscal Year'] >= 2013 && +d['Fiscal Year'] <= 2023)
+                .map((d) => ({
+                    entity: d['Entity Name'],
+                    year: +d['Fiscal Year'],
+                    perCapita: +d['Expenditures Per Capita'],
+                    totalExpenditure: +d['Total Expenditures'],
+                    population: +d['Estimated Population'],
+                    region: regionMap[d['Entity Name']] || 'Unknown',
+                }))
+                .filter((d) => d.region !== 'Unknown');
+
+            const regionYearGroups = d3.rollup(
+                filteredData,
+                (v) => ({
+                    avgPerCapita: d3.mean(v, (d) => d.perCapita),
+                    totalPopulation: d3.sum(v, (d) => d.population),
+                    totalExpenditure: d3.sum(v, (d) => d.totalExpenditure),
+                }),
+                (d) => d.region,
+                (d) => d.year
+            );
+
+            const heatmapData = [];
+            const regions = Array.from(regionYearGroups.keys()).sort();
+            const years = Array.from(new Set(filteredData.map((d) => d.year))).sort((a, b) => a - b);
+
+            regions.forEach((region) => {
+                years.forEach((year) => {
+                    const data = regionYearGroups.get(region)?.get(year);
+                    heatmapData.push({
+                        region,
+                        year,
+                        value: data?.avgPerCapita || 0,
+                        population: data?.totalPopulation || 0,
+                        totalExpenditure: data?.totalExpenditure || 0,
+                    });
+                });
+            });
+
+            const x = d3.scaleBand()
+                .domain(years.map(String))
+                .range([0, heatmapWidth])
+                .padding(0.05);
+
+            const y = d3.scaleBand()
+                .domain(regions)
+                .range([0, heatmapHeight])
+                .padding(0.05);
+
+            const colorThresholds = [0, 500, 1000, 1500, 2000, 2500, 3000, 3500, 4000];
+            const colorScale = d3.scaleThreshold()
+                .domain(colorThresholds)
+                .range([
+                    '#f7fcf0',
+                    '#e0f3db',
+                    '#ccebc5',
+                    '#a8ddb5',
+                    '#7bccc4',
+                    '#4eb3d3',
+                    '#2b8cbe',
+                    '#0868ac',
+                    '#084081',
+                ]);
+
+            heatmapSvg.selectAll()
+                .data(heatmapData)
+                .enter()
+                .append('rect')
+                .attr('x', (d) => x(String(d.year)))
+                .attr('y', (d) => y(d.region))
+                .attr('width', x.bandwidth())
+                .attr('height', y.bandwidth())
+                .style('fill', (d) => colorScale(d.value));
+
+            heatmapSvg.append('g')
+                .attr('transform', `translate(0,${heatmapHeight})`)
+                .call(d3.axisBottom(x).tickSize(0))
+                .selectAll('text')
+                .style('text-anchor', 'middle')
+                .attr('dy', '1em')
+                .style('font-size', '14px');
+
+            heatmapSvg.append('g')
+                .call(d3.axisLeft(y))
+                .selectAll('text')
+                .style('font-size', '14px');
+
+            const legendWidth = 25,
+                legendHeight = 250;
+            const legend = heatmapSvg.append('g')
+                .attr('transform', `translate(${heatmapWidth + 60}, 50)`);
+
+            const legendScale = d3.scaleLinear()
+                .domain([0, 4000])
+                .range([legendHeight, 0]);
+
+            const defs = heatmapSvg.append('defs');
+            const gradient = defs.append('linearGradient')
+                .attr('id', 'legend-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '100%')
+                .attr('x2', '0%')
+                .attr('y2', '0%');
+
+            colorThresholds.forEach((t, i) => {
+                gradient.append('stop')
+                    .attr('offset', `${(t / 4000) * 100}%`)
+                    .attr('stop-color', colorScale.range()[i]);
+            });
+
+            legend.append('rect')
+                .attr('width', legendWidth)
+                .attr('height', legendHeight)
+                .style('fill', 'url(#legend-gradient)');
+
+            legend.append('g')
+                .attr('transform', `translate(${legendWidth}, 0)`)
+                .call(
+                    d3.axisRight(legendScale)
+                        .tickValues(colorThresholds)
+                        .tickFormat(d3.format('$,.0f'))
+                )
+                .selectAll('text')
+                .style('font-size', '12px');
+
+            legend.append('text')
+                .attr('x', legendWidth / 2)
+                .attr('y', -15)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '14px')
+                .text('Per Capita ($)');
+
+            const tooltip = d3.select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('opacity', 0);
+
+            heatmapSvg.selectAll('rect')
+                .on('mouseover', (event, d) => {
+                    tooltip.style('opacity', 1)
+                        .html(`
+                            <strong>${d.region} (${d.year})</strong><br>
+                            Per Capita: $${Math.round(d.value)}<br>
+                            Total Population: ${d3.format(',')(Math.round(d.population))}<br>
+                            Total Expenditure: $${d3.format(',')(Math.round(d.totalExpenditure))}
+                        `)
+                        .style('left', event.pageX + 10 + 'px')
+                        .style('top', event.pageY - 28 + 'px');
+                })
+                .on('mouseout', () => tooltip.style('opacity', 0));
+
+            heatmapSvg.append('text')
+                .attr('x', heatmapWidth / 2)
+                .attr('y', -40)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '20px')
+                .style('font-weight', 'bold')
+                .text('California Per Capita Expenditures by Region and Year (2013-2023)');
+        });
+
+        const EXPENDITURE_URL = 'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv';
+        const REGION_URL = 'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv';
+
+        Promise.all([d3.csv(EXPENDITURE_URL), d3.csv(REGION_URL)])
+            .then(([expenditureData, regionData]) => {
+                document.getElementById('loading').style.display = 'none';
+
+                const regionMap = {};
+                regionData.forEach((d) => {
+                    regionMap[d['Entity Name']] = d.Region;
+                });
+
+                const cityStats = d3.rollup(
+                    expenditureData.filter((d) => {
+                        const year = +d['Fiscal Year'];
+                        return year >= 2013 && year <= 2023;
+                    }),
+                    (v) => {
+                        const total = d3.sum(v, (d) => +d['Expenditures Per Capita']);
+                        return total / v.length;
+                    },
+                    (d) => d['Entity Name']
+                );
+
+                const regionGroups = {};
+                cityStats.forEach((avg, city) => {
+                    const region = regionMap[city];
+                    if (!region) return;
+
+                    if (!regionGroups[region]) {
+                        regionGroups[region] = [];
+                    }
+                    regionGroups[region].push({ city, avg });
+                });
+
+                const results = {};
+                Object.entries(regionGroups).forEach(([region, cities]) => {
+                    cities.sort((a, b) => b.avg - a.avg);
+                    results[region] = {
+                        top: cities.slice(0, 5),
+                        bottom: cities.slice(-5).reverse(),
+                    };
+                });
+
+                createCharts(results);
+            })
+            .catch((error) => {
+                document.getElementById('loading').textContent = 'Error loading data. Please check console.';
+                console.error('Error:', error);
+            });
+
+        function createCharts(regionData) {
+            const tooltip = d3.select('body')
+                .append('div')
+                .attr('class', 'tooltip')
+                .style('opacity', 0);
+
+            const logTickValues = {
+                'Southern California': [0, 800, 1600, 8000, 16000, 80000, 160000, 800000, 1600000],
+                'Northern California': [0, 500, 1000, 1500, 5000, 10000, 15000, 50000],
+                'Sierra Nevada': [0, 200, 500, 1000, 2000, 5000, 10000],
+                'Central California': [0, 500, 1000, 2500, 5000, 10000, 25000]
+            };
+
+            Object.entries(regionData).forEach(([region, data]) => {
+                const container = d3.select('#extremes-charts')
+                    .append('div')
+                    .attr('class', `region-chart ${region.toLowerCase().replace(' ', '-')}`);
+
+                container.append('h3').text(region);
+
+                const svg = container.append('svg')
+                    .attr('width', '100%')
+                    .attr('height', '400')
+                    .attr('viewBox', '0 0 700 400'); // Increased viewBox width to 700 to accommodate labels
+
+                const chartData = [
+                    ...data.top.map(d => ({ ...d, type: 'high' })),
+                    ...data.bottom.map(d => ({ ...d, type: 'low' })),
+                ];
+
+                const y = d3.scaleBand()
+                    .domain(chartData.map(d => d.city))
+                    .range([350, 50])
+                    .padding(0.3);
+
+                svg.append('line')
+                    .attr('class', 'axis-line')
+                    .attr('x1', 150) // Increased left margin
+                    .attr('x2', 650) // Adjusted right position
+                    .attr('y1', 350)
+                    .attr('y2', 350);
+
+                const ticks = logTickValues[region];
+                const xTickPositions = d3.range(ticks.length).map(
+                    i => 150 + (i / (ticks.length - 1)) * (650 - 150) // Adjusted for new margins
+                );
+
+                const customXScale = (value) => {
+                    for (let i = 0; i < ticks.length - 1; i++) {
+                        if (value >= ticks[i] && value <= ticks[i + 1]) {
+                            const t = (value - ticks[i]) / (ticks[i + 1] - ticks[i]);
+                            return xTickPositions[i] + t * (xTickPositions[i + 1] - xTickPositions[i]);
+                        }
+                    }
+                    return value < ticks[0] ? xTickPositions[0] : xTickPositions[xTickPositions.length - 1];
+                };
+
+                svg.selectAll('.bar')
+                    .data(chartData)
+                    .enter()
+                    .append('rect')
+                    .attr('class', d => `bar ${d.type}`)
+                    .attr('y', d => y(d.city))
+                    .attr('x', 150) // Adjusted for new left margin
+                    .attr('width', d => customXScale(d.avg) - 150) // Adjusted for new left margin
+                    .attr('height', y.bandwidth())
+                    .on('mouseover', function(event, d) {
+                        d3.select(this).attr('opacity', 0.8);
+                        tooltip.html(`${d.city}<br>Avg: $${d.avg.toFixed(2)}`)
+                            .style('opacity', 1)
+                            .style('left', event.pageX + 10 + 'px')
+                            .style('top', event.pageY - 28 + 'px');
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this).attr('opacity', 1);
+                        tooltip.style('opacity', 0);
+                    });
+
+                const xAxis = svg.append('g')
+                    .attr('class', 'axis')
+                    .attr('transform', 'translate(0,350)');
+
+                xAxis.selectAll('.tick')
+                    .data(ticks)
+                    .enter()
+                    .append('g')
+                    .attr('transform', (d, i) => `translate(${xTickPositions[i]},0)`)
+                    .call(g => g.append('line').attr('y2', 6).attr('stroke', '#000'))
+                    .call(g => g.append('text')
+                        .attr('y', 20)
+                        .attr('dy', '0.35em')
+                        .attr('text-anchor', 'middle')
+                        .text(d => {
+                            if (d >= 1000000) return `$${d / 1000000}M`;
+                            if (d >= 1000) return `$${d / 1000}K`;
+                            return `$${d}`;
+                        })
+                        .style('font-size', '12px')
+                    );
+
+                svg.append('g')
+                    .attr('class', 'axis')
+                    .attr('transform', 'translate(150,0)') // Adjusted for new left margin
+                    .call(d3.axisLeft(y))
+                    .selectAll('text')
+                    .style('font-size', '12px')
+                    .attr('x', -140) // Move labels further left
+                    .attr('text-anchor', 'start');
+
+                const legend = svg.append('g')
+                    .attr('transform', 'translate(500,20)');
+
+                legend.append('rect')
+                    .attr('x', 0)
+                    .attr('y', 0)
+                    .attr('width', 12)
+                    .attr('height', 12)
+                    .attr('fill', '#e15759');
+
+                legend.append('text')
+                    .attr('x', 18)
+                    .attr('y', 10)
+                    .text('Top 5')
+                    .style('font-size', '12px');
+
+                legend.append('rect')
+                    .attr('x', 80)
+                    .attr('y', 0)
+                    .attr('width', 12)
+                    .attr('height', 12)
+                    .attr('fill', '#76b7b2');
+
+                legend.append('text')
+                    .attr('x', 98)
+                    .attr('y', 10)
+                    .text('Bottom 5')
+                    .style('font-size', '12px');
+            });
+        }
+
+        const scatterSvg = d3.select('#scatter-plot')
+            .append('svg')
+            .attr('width', '100%')
+            .attr('height', '100%')
+            .attr('viewBox', '0 0 1200 800');
+
+        Promise.all([
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/City_Expenditures_Per_Capita.csv'),
+            d3.csv('https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/main/city_to_region.csv')
+        ]).then(([expData, regionData]) => {
+            const regions = d3.rollup(
+                regionData,
+                (v) => v[0].Region,
+                (d) => d['Entity Name']
+            );
+
+            const cities = d3.rollup(
+                expData.filter((d) => d['Fiscal Year'] >= 2013 && d['Fiscal Year'] <= 2023),
+                (v) => ({
+                    pop: d3.mean(v, (d) => +d['Estimated Population']),
+                    spend: d3.mean(v, (d) => +d['Expenditures Per Capita']),
+                    region: regions.get(v[0]['Entity Name']) || 'Unknown',
+                }),
+                (d) => d['Entity Name']
+            );
+
+            const data = Array.from(cities, ([name, stats]) => ({
+                name,
+                ...stats,
+            })).filter((d) => d.region !== 'Unknown');
+
+            const uniqueRegions = [...new Set(data.map((d) => d.region))].sort();
+
+            const regionFilter = d3.select('#region-filter');
+            uniqueRegions.forEach((region) => {
+                regionFilter.append('option')
+                    .attr('value', region)
+                    .text(region);
+            });
+
+            const xTickValues = [0, 400, 800, 4000, 8000, 40000, 80000, 400000, 800000, 4000000];
+            const xTickPositions = d3.range(xTickValues.length).map(
+                (i) => 100 + (i / (xTickValues.length - 1)) * (1100 - 100)
+            );
+
+            const yTickValues = [0, 800, 1600, 8000, 16000, 80000, 160000, 800000, 1600000];
+            const yTickPositions = d3.range(yTickValues.length).map(
+                (i) => 700 - (i / (yTickValues.length - 1)) * (700 - 100)
+            );
+
+            const customXScale = (value) => {
+                for (let i = 0; i < xTickValues.length - 1; i++) {
+                    if (value >= xTickValues[i] && value <= xTickValues[i + 1]) {
+                        const t = (value - xTickValues[i]) / (xTickValues[i + 1] - xTickValues[i]);
+                        return xTickPositions[i] + t * (xTickPositions[i + 1] - xTickPositions[i]);
+                    }
+                }
+                return value < xTickValues[0] ? xTickPositions[0] : xTickPositions[xTickPositions.length - 1];
+            };
+
+            const customYScale = (value) => {
+                for (let i = 0; i < yTickValues.length - 1; i++) {
+                    if (value >= yTickValues[i] && value <= yTickValues[i + 1]) {
+                        const t = (value - yTickValues[i]) / (yTickValues[i + 1] - yTickValues[i]);
+                        return yTickPositions[i] + t * (yTickPositions[i + 1] - yTickPositions[i]);
+                    }
+                }
+                return value < yTickValues[0] ? yTickPositions[0] : yTickPositions[yTickValues.length - 1];
+            };
+
+            scatterSvg.append('line')
+                .attr('class', 'axis-line')
+                .attr('x1', 100)
+                .attr('y1', 700)
+                .attr('x2', 1100)
+                .attr('y2', 700);
+
+            const xAxis = scatterSvg.append('g')
+                .attr('transform', 'translate(0,700)')
+                .attr('class', 'x-axis');
+
+            xAxis.selectAll('.tick')
+                .data(xTickValues)
+                .enter()
+                .append('g')
+                .attr('transform', (d, i) => `translate(${xTickPositions[i]},0)`)
+                .call((g) => g.append('line').attr('stroke', '#000').attr('y2', 6))
+                .call((g) => g.append('text')
+                    .attr('y', 20)
+                    .attr('dy', '0.35em')
+                    .attr('text-anchor', 'middle')
+                    .text((d) => {
+                        if (d >= 1000000) return `${d / 1000000}M`;
+                        if (d >= 1000) return `${d / 1000}K`;
+                        return d;
+                    })
+                    .style('font-size', '12px'));
+
+            scatterSvg.append('line')
+                .attr('class', 'axis-line')
+                .attr('x1', 100)
+                .attr('y1', 100)
+                .attr('x2', 100)
+                .attr('y2', 700);
+
+            const yAxis = scatterSvg.append('g')
+                .attr('transform', 'translate(100,0)')
+                .attr('class', 'y-axis');
+
+            yAxis.selectAll('.tick')
+                .data(yTickValues)
+                .enter()
+                .append('g')
+                .attr('transform', (d, i) => `translate(0,${yTickPositions[i]})`)
+                .call((g) => g.append('line').attr('stroke', '#000').attr('x2', -6))
+                .call((g) => g.append('text')
+                    .attr('x', -10)
+                    .attr('dy', '0.35em')
+                    .attr('text-anchor', 'end')
+                    .text((d) => {
+                        if (d >= 1000000) return `$${d / 1000000}M`;
+                        if (d >= 1000) return `$${d / 1000}K`;
+                        return `$${d}`;
+                    })
+                    .style('font-size', '12px'));
+
+            scatterSvg.append('text')
+                .attr('x', 600)
+                .attr('y', 770)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '16px')
+                .text('Average Population (2013-2023)');
+
+            scatterSvg.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', -550)
+                .attr('y', 20)
+                .attr('text-anchor', 'middle')
+                .style('font-size', '16px')
+                .text('Average Per Capita Spending ($)');
+
+            const color = d3.scaleOrdinal()
+                .domain(uniqueRegions)
+                .range(uniqueRegions.map(r => regionColors[r]));
+
+            drawChart(data);
+
+            d3.select('#region-filter').on('change', function() {
+                const selectedRegion = this.value;
+                const filteredData = selectedRegion === 'all' 
+                    ? data 
+                    : data.filter((d) => d.region === selectedRegion);
+                drawChart(filteredData);
+            });
+
+            function drawChart(chartData) {
+                const dots = scatterSvg.selectAll('circle')
+                    .data(chartData, (d) => d.name);
+
+                dots.exit().remove();
+
+                dots.enter()
+                    .append('circle')
+                    .attr('r', 5)
+                    .attr('fill', (d) => color(d.region))
+                    .on('mouseover', showTooltip)
+                    .on('mouseout', hideTooltip)
+                    .merge(dots)
+                    .attr('cx', (d) => customXScale(d.pop))
+                    .attr('cy', (d) => customYScale(d.spend));
+            }
+
+            function showTooltip(e, d) {
+                d3.select('#tooltip').remove();
+                const tooltip = d3.select('body')
+                    .append('div')
+                    .attr('id', 'tooltip')
+                    .attr('class', 'tooltip')
+                    .html(`${d.name}<br>${d.region}<br>Pop: ${d3.format(',')(Math.round(d.pop))}<br>Spend: $${d3.format(',')(Math.round(d.spend))}`)
+                    .style('left', `${e.pageX + 10}px`)
+                    .style('top', `${e.pageY - 28}px`);
+            }
+
+            function hideTooltip() {
+                d3.select('#tooltip').remove();
+            }
+        });
+    </script>
+</body>
+</html>

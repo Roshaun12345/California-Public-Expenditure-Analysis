@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>
+      California Regional Expenditure Distribution
+    </title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .tooltip {
+        position: absolute;
+        padding: 8px;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 4px;
+        pointer-events: none;
+        font-size: 14px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 20px;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 0 10px;
+      }
+      .legend-color {
+        width: 20px;
+        height: 20px;
+        margin-right: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>
+      Total Expenditure Distribution by Region (2013-2023)
+    </h2>
+    <div id="pie-chart"></div>
+    <div class="legend" id="legend"></div>
+
+    <script>
+      //reference: https://observablehq.com/@d3/pie-chart/2
+      Promise.all([
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/refs/heads/main/City_Expenditures_Per_Capita.csv',
+        ),
+        d3.csv(
+          'https://raw.githubusercontent.com/Roshaun12345/California-Public-Expenditure-Analysis/refs/heads/main/city_to_region.csv',
+        ),
+      ]).then(function ([expenditureData, regionData]) {
+        const regionMap = {};
+        regionData.forEach((d) => {
+          regionMap[d['Entity Name']] = d.Region;
+        });
+
+        const filteredData = expenditureData
+          .filter((d) => {
+            const year = +d['Fiscal Year'];
+            return year >= 2013 && year <= 2023;
+          })
+          .map((d) => {
+            return {
+              entity: d['Entity Name'],
+              totalExpenditure: +d['Total Expenditures'],
+              region:
+                regionMap[d['Entity Name']] || 'Unknown',
+            };
+          })
+          .filter((d) => d.region !== 'Unknown');
+
+        const regionTotals = d3.rollup(
+          filteredData,
+          (v) => d3.sum(v, (d) => d.totalExpenditure),
+          (d) => d.region,
+        );
+
+        const pieData = Array.from(
+          regionTotals,
+          ([region, total]) => ({
+            region,
+            total,
+          }),
+        );
+
+        const width = 700;
+        const height = 500;
+        const radius = Math.min(width, height) / 2 - 40;
+
+        const color = d3
+          .scaleOrdinal()
+          .domain(pieData.map((d) => d.region))
+          .range(d3.schemeTableau10);
+
+        const pie = d3
+          .pie()
+          .value((d) => d.total)
+          .sort(null);
+
+        const arc = d3
+          .arc()
+          .innerRadius(0)
+          .outerRadius(radius);
+
+        const outerArc = d3
+          .arc()
+          .innerRadius(radius * 0.9)
+          .outerRadius(radius * 0.9);
+
+        const svg = d3
+          .select('#pie-chart')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
+          .append('g')
+          .attr(
+            'transform',
+            `translate(${width / 2}, ${height / 2})`,
+          );
+
+        const tooltip = d3
+          .select('body')
+          .append('div')
+          .attr('class', 'tooltip')
+          .style('opacity', 0);
+
+        const arcs = svg
+          .selectAll('.arc')
+          .data(pie(pieData))
+          .enter()
+          .append('g')
+          .attr('class', 'arc');
+
+        arcs
+          .append('path')
+          .attr('d', arc)
+          .attr('fill', (d) => color(d.data.region))
+          .on('mouseover', function (event, d) {
+            d3.select(this)
+              .attr('stroke', 'white')
+              .attr('stroke-width', 2);
+            tooltip
+              .transition()
+              .duration(200)
+              .style('opacity', 0.9);
+            tooltip
+              .html(
+                `<strong>${d.data.region}</strong><br>
+              Total: $${d3.format(',.0f')(d.data.total)}<br>
+              Percentage: ${(((d.endAngle - d.startAngle) / (2 * Math.PI)) * 100).toFixed(1)}%`,
+              )
+              .style('left', event.pageX + 10 + 'px')
+              .style('top', event.pageY - 28 + 'px');
+          })
+          .on('mouseout', function () {
+            d3.select(this).attr('stroke', null);
+            tooltip
+              .transition()
+              .duration(500)
+              .style('opacity', 0);
+          });
+
+        arcs
+          .append('text')
+          .attr('transform', (d) => {
+            const pos = outerArc.centroid(d);
+            pos[0] =
+              radius *
+              1.1 *
+              (midAngle(d) < Math.PI ? 1 : -1);
+            return `translate(${pos})`;
+          })
+          .attr('dy', '.35em')
+          .style('text-anchor', (d) =>
+            midAngle(d) < Math.PI ? 'start' : 'end',
+          )
+          .text((d) => d.data.region)
+          .style('font-size', '12px')
+          .style('fill', '#333');
+
+        function midAngle(d) {
+          return (
+            d.startAngle + (d.endAngle - d.startAngle) / 2
+          );
+        }
+
+        const legend = d3.select('#legend');
+        const legendItems = legend
+          .selectAll('.legend-item')
+          .data(pieData)
+          .enter()
+          .append('div')
+          .attr('class', 'legend-item');
+
+        legendItems
+          .append('div')
+          .attr('class', 'legend-color')
+          .style('background-color', (d) =>
+            color(d.region),
+          );
+
+        legendItems
+          .append('div')
+          .text(
+            (d) =>
+              `${d.region}: $${d3.format(',.0f')(d.total)}`,
+          )
+          .style('font-size', '14px');
+
+        const totalExpenditure = d3.sum(
+          pieData,
+          (d) => d.total,
+        );
+        d3.select('h2').text(
+          `Total Expenditure Distribution by Region (2013-2023) - $${d3.format(',.0f')(totalExpenditure)}`,
+        );
+      });
+    </script>
+  </body>
+</html>
