@@ -9,9 +9,9 @@ An interactive data visualization and analysis of public spending across Califor
 
 ## Key Findings
 
-- **Southern California's average is misleading.** Vernon — an industrial city of ~100 residents — spends over $2M per capita, pushing the regional mean to $11,762 against a median of just $1,343 (a ratio of 8.8x). Median is the right metric.
+- **Southern California's average is misleading.** Vernon, an industrial city of ~100 residents, spends over $2M per capita, pushing the regional mean to $11,762 against a median of just $1,343 (a ratio of 8.8x). Median is the right metric.
 - **Northern California grew the fastest.** Median per-capita spending rose 69% from 2013 to 2023, driven by Bay Area cities like Mountain View and San Francisco.
-- **City size predicts spending more than region.** The top spenders in every region are small municipalities — resort towns, tech enclaves, coastal cities — with high fixed costs relative to their populations.
+- **City size predicts spending more than region.** The top spenders in every region are small municipalities, resort towns, tech enclaves, coastal cities, with high fixed costs relative to their populations.
 - **Within-region variation is extreme.** In Northern California alone, Mountain View ($45,645) spends 69x more per capita than Citrus Heights ($660).
 
 ---
