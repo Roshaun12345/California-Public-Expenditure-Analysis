@@ -10,7 +10,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8f9fa;
+            background: #e8edf5;
             color: #212529;
             line-height: 1.6;
         }
@@ -59,7 +59,7 @@
         .hero .subtitle {
             font-size: 18px;
             color: #a8c7fa;
-            max-width: 700px;
+            max-width: 900px;
             margin: 0 auto 32px;
         }
         .hero .tags {
@@ -203,22 +203,15 @@
 
     <nav>
         <span class="nav-title">California Public Expenditure Analysis</span>
-        <a href="https://github.com/Roshaun12345/California-Public-Expenditure-Analysis" target="_blank">View on GitHub</a>
+        <a href="analysis.html" target="_blank">View Analysis</a>
     </nav>
 
     <div class="hero">
         <h1>California Public Expenditure Analysis</h1>
         <p class="subtitle">
-            A decade of public spending data across California's regions — exploring how cities allocate resources,
+            A decade of public spending data across California's regions, exploring how cities allocate resources,
             where per-capita spending is highest, and what population trends reveal about fiscal priorities.
         </p>
-        <div class="tags">
-            <span class="tag">D3.js</span>
-            <span class="tag">Data Visualization</span>
-            <span class="tag">California Open Data</span>
-            <span class="tag">2013 – 2023</span>
-            <span class="tag">4 Regions · 400+ Cities</span>
-        </div>
     </div>
 
     <!-- Population Trends -->
@@ -232,8 +225,8 @@
         </div>
         <div class="insight">
             <div class="insight-label">Key Finding</div>
-            <p>Southern California dominates by population — 18.9M residents across tracked cities in 2023 vs. 9.4M in Northern California.
-               Central California holds 3.4M, and the entire Sierra Nevada region has just 120,000 — smaller than many individual cities.
+            <p>Southern California dominates by population, with 18.9M residents across tracked cities in 2023 vs. 9.4M in Northern California.
+               Central California holds 3.4M, and the entire Sierra Nevada region has just 120,000, smaller than many individual cities.
                This population gap is the single biggest driver of how per-capita spending differs across regions.</p>
         </div>
     </div>
@@ -252,7 +245,7 @@
             <div class="insight-label">Key Finding</div>
             <p>Southern California accounts for 55.6% ($505B) of total expenditure across the decade, followed by Northern California
                at 37.5% ($341B). Central California and Sierra Nevada together make up the remaining 7%. However, Southern California's
-               average is heavily skewed by Vernon — an industrial city of ~100 residents with per-capita spending exceeding $2M in some years.
+               average is heavily skewed by Vernon, an industrial city of ~100 residents with per-capita spending exceeding $2M in some years.
                The median tells a different story: SoCal's median per-capita ($1,343) is actually <em>lower</em> than Sierra Nevada ($2,198),
                highlighting how a single outlier can distort regional comparisons.</p>
         </div>
@@ -269,10 +262,10 @@
         </div>
         <div class="insight">
             <div class="insight-label">Key Finding</div>
-            <p>Northern California saw the sharpest growth of any region — average per-capita spending rose 116% from $1,759 in 2013
+            <p>Northern California saw the sharpest growth of any region, with average per-capita spending rising 116% from $1,759 in 2013
                to $3,791 in 2023, more than doubling. Central California (+53%) and Sierra Nevada (+51%) grew at roughly half that rate.
                Southern California is the outlier in the other direction: average per-capita <em>fell</em> 15% over the decade, from
-               $13,326 to $11,370 — though this is driven almost entirely by Vernon's extreme early-decade numbers masking the broader trend.
+               $13,326 to $11,370, though this is driven almost entirely by Vernon's extreme early-decade numbers masking the broader trend.
                All regions show an uptick around 2020–2021, consistent with pandemic-era emergency spending.</p>
         </div>
     </div>
@@ -288,7 +281,7 @@
         </div>
         <div class="insight">
             <div class="insight-label">Key Finding</div>
-            <p>The within-region spread is enormous. In Northern California, Mountain View averages $45,645 per capita —
+            <p>The within-region spread is enormous. In Northern California, Mountain View averages $45,645 per capita,
                nearly 70x more than Citrus Heights at $660. In Southern California, Vernon ($1.5M average) and Industry ($486K)
                are industrial enclaves with tiny resident populations but massive tax bases, making direct comparison with
                residential cities misleading. Excluding these outliers, the top-to-bottom ratio across regions is roughly 10:1,
@@ -314,7 +307,7 @@
         <div class="insight">
             <div class="insight-label">Key Finding</div>
             <p>The scatter confirms a strong inverse relationship: smaller cities consistently spend more per resident.
-               Southern California's average is distorted by Vernon (population ~100, per-capita spend >$1M) and Industry —
+               Southern California's average is distorted by Vernon (population ~100, per-capita spend >$1M) and Industry,
                filtering to other regions makes the pattern far clearer. Sierra Nevada cities cluster in the upper-left
                (small population, high per-capita), while large Southern California cities like Los Angeles sit in the
                lower-right (high population, moderate spend). The takeaway: population size is a better predictor of
