@@ -2,7 +2,7 @@
 
 An interactive data visualization and analysis of public spending across California's four regions — Northern California, Southern California, Central California, and Sierra Nevada — from 2013 to 2023.
 
-**Live site:** https://roshaun12345.github.io/California-Public-Expenditure-Analysis/Website.html  
+**Live site:** https://roshaun12345.github.io/California-Public-Expenditure-Analysis/  
 **Analysis notebook:** https://roshaun12345.github.io/California-Public-Expenditure-Analysis/analysis.html
 
 ---
